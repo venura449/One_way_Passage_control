@@ -1,0 +1,17 @@
+{
+  "name": "traffic-control-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Backend server for one-way traffic control system",
+  "main": "Server.js",
+  "scripts": {
+    "start": "node Server.js",
+    "dev": "node --watch Server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "mqtt": "^5.3.1"
+  }
+}
+
