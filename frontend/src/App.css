@@ -740,7 +740,7 @@
   /* Removed priorityBlink animation for performance */
   will-change: transform;
   transform: translateZ(0);
-}
+  }
 
 /* Waiting Vehicles Section */
 .waiting-vehicles-section {

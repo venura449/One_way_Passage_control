@@ -33,15 +33,51 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('connecting');
 
-  // Fetch initial state - reduced polling frequency for better performance
+  // Fetch initial state plus light polling as a fallback for SSE
   useEffect(() => {
     fetchLightStates();
     fetchVehicleData();
-    const lightInterval = setInterval(fetchLightStates, 3000); // Reduced from 2000ms
-    const vehicleInterval = setInterval(fetchVehicleData, 3000); // Reduced from 2000ms
+    const fallbackInterval = setInterval(fetchLightStates, 15000);
+    const vehicleInterval = setInterval(fetchVehicleData, 15000);
     return () => {
-      clearInterval(lightInterval);
+      clearInterval(fallbackInterval);
       clearInterval(vehicleInterval);
+    };
+  }, []);
+
+  // Subscribe to server-sent events for realtime light/vehicle updates
+  useEffect(() => {
+    const eventSource = new EventSource(`${API_BASE_URL}/lights/stream`);
+
+    eventSource.onopen = () => {
+      setConnectionStatus('connected');
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.lights) {
+          setLights(payload.lights);
+        }
+        if (payload.trafficFlow) {
+          setTrafficFlow(payload.trafficFlow);
+        }
+        if (payload.vehicleData) {
+          setVehicleData(payload.vehicleData);
+        }
+        setConnectionStatus('connected');
+      } catch (error) {
+        console.error('Error parsing SSE payload:', error);
+      }
+    };
+
+    eventSource.onerror = () => {
+      // Allow the browser to auto-reconnect while showing connecting status
+      setConnectionStatus('connecting');
+    };
+
+    return () => {
+      eventSource.close();
     };
   }, []);
 
@@ -58,11 +94,9 @@ function App() {
         if (data.vehicleData) {
           setVehicleData(data.vehicleData);
         }
-        setConnectionStatus('connected');
       }
     } catch (error) {
       console.error('Error fetching traffic light states:', error);
-      setConnectionStatus('disconnected');
     }
   };
 

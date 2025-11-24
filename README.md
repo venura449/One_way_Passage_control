@@ -17,6 +17,7 @@ A beautiful, animated management portal for controlling a one-way traffic system
 - Node.js
 - Express.js
 - MQTT Client (for real-time vehicle data)
+- Firestore REST integration (for ESP32 gate controller)
 - CORS enabled for frontend communication
 
 ### Frontend
@@ -60,6 +61,21 @@ You can configure the MQTT broker by setting environment variables:
 MQTT_BROKER_HOST=your-broker.com MQTT_BROKER_PORT=1883 npm start
 ```
 
+**Firebase / Firestore Configuration:**
+The backend can sync traffic light states with a Firestore document used by the ESP32 controller.
+
+Environment variables (optional, defaults shown):
+```bash
+FIREBASE_PROJECT_ID=wastemanagement-fc678
+FIREBASE_API_KEY=AIzaSyC26ndJ968-9OL2R9Vw2d-5JbkGn0Ov7ec
+FIREBASE_GATE_DOC_PATH=Traffic/Trafficdata
+FIREBASE_SYNC_INTERVAL=5000   # milliseconds
+```
+
+- The server polls the Firestore document every few seconds.
+- `gate01` / `gate02` boolean values → `false = red`, `true = green`.
+- When traffic light states are changed via the portal, the server patches the same document so the ESP32 stays in sync.
+
 For development with auto-reload:
 ```bash
 npm run dev
@@ -83,6 +99,16 @@ npm dev
 ```
 
 The frontend will run on `http://localhost:5173` (or another port if 5173 is busy)
+
+### Run Backend & Frontend Together (Concurrently)
+
+From the project root you can install the helper dependency and start both servers at once:
+
+```bash
+npm install          # installs root devDependencies (concurrently)
+npm run install:all  # installs backend + frontend deps
+npm run dev          # runs backend (watch) + frontend (vite) together
+```
 
 ## Usage
 
@@ -183,7 +209,7 @@ The backend automatically subscribes to MQTT topics published by your Python YOL
 
 ## Development
 
-The frontend polls the backend every 2 seconds for status updates. The backend receives real-time vehicle data via MQTT from your Python tracking script. Traffic lights transition through yellow when changing between red and green states.
+The frontend polls the backend every 3 seconds for status updates. The backend receives real-time vehicle data via MQTT from your Python tracking script, and keeps traffic light states in sync with Firestore so hardware controllers (ESP32) always reflect the latest state. Traffic lights transition through yellow when changing between red and green states.
 
 ## License
 
